@@ -2,9 +2,6 @@
 <ui version="4.0">
  <class>MainWindowClass</class>
  <widget class="QMainWindow" name="MainWindowClass">
-  <property name="objectName" >
-    <string notr="true">MainWindowClass</string>
-  </property>
   <property name="geometry">
    <rect>
     <x>0</x>
@@ -23,8 +20,8 @@
    <string>串口调试助手</string>
   </property>
   <property name="windowIcon">
-   <iconset resource="Resources.qrc">
-    <normaloff>:/icon/icon.ico</normaloff>:/icon/icon.ico</iconset>
+   <iconset resource="MainWindow.qrc">
+    <normaloff>:/img/ICON</normaloff>:/img/ICON</iconset>
   </property>
   <property name="documentMode">
    <bool>false</bool>
@@ -568,7 +565,7 @@ QToolButton#btnSend:hover{
      <string>...</string>
     </property>
     <property name="icon">
-     <iconset resource="Resources.qrc">
+     <iconset resource="MainWindow.qrc">
       <normaloff>:/img/发送</normaloff>:/img/发送</iconset>
     </property>
     <property name="iconSize">
@@ -630,7 +627,7 @@ QToolButton#btnSend:hover{
     <bool>true</bool>
    </property>
    <property name="icon">
-    <iconset resource="Resources.qrc">
+    <iconset resource="MainWindow.qrc">
      <normaloff>:/img/启动</normaloff>:/img/启动</iconset>
    </property>
    <property name="text">
@@ -642,7 +639,7 @@ QToolButton#btnSend:hover{
     <bool>true</bool>
    </property>
    <property name="icon">
-    <iconset resource="Resources.qrc">
+    <iconset resource="MainWindow.qrc">
      <normaloff>:/img/暂停</normaloff>:/img/暂停</iconset>
    </property>
    <property name="text">
@@ -654,7 +651,7 @@ QToolButton#btnSend:hover{
     <bool>true</bool>
    </property>
    <property name="icon">
-    <iconset resource="Resources.qrc">
+    <iconset resource="MainWindow.qrc">
      <normaloff>:/img/停止</normaloff>:/img/停止</iconset>
    </property>
    <property name="text">
@@ -666,7 +663,7 @@ QToolButton#btnSend:hover{
   </action>
   <action name="clean">
    <property name="icon">
-    <iconset resource="Resources.qrc">
+    <iconset resource="MainWindow.qrc">
      <normaloff>:/img/清理</normaloff>:/img/清理</iconset>
    </property>
    <property name="text">
@@ -675,7 +672,7 @@ QToolButton#btnSend:hover{
   </action>
   <action name="CRC">
    <property name="icon">
-    <iconset resource="Resources.qrc">
+    <iconset resource="MainWindow.qrc">
      <normaloff>:/img/CRC</normaloff>:/img/CRC</iconset>
    </property>
    <property name="text">
@@ -687,7 +684,7 @@ QToolButton#btnSend:hover{
   </action>
   <action name="CMD">
    <property name="icon">
-    <iconset resource="Resources.qrc">
+    <iconset resource="MainWindow.qrc">
      <normaloff>:/img/CMD</normaloff>:/img/CMD</iconset>
    </property>
    <property name="text">

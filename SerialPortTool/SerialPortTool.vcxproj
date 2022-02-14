@@ -94,6 +94,13 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="CrcCheck.h" />
+    <ClInclude Include="resource.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="SerialPortTool.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="SerialPortTool.ico" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Condition="Exists('$(QtMsBuild)\qt.targets')">

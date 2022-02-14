@@ -58,5 +58,6 @@ compile_commands.json
 .vs
 *.user
 *.filters
+*.aps
 Debug
 Release
