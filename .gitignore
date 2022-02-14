@@ -54,3 +54,9 @@ compile_commands.json
 
 *_qmlcache.qrc
 
+# Custom content
+.vs
+*.user
+*.filters
+Debug
+Release
