@@ -22,9 +22,9 @@ public:
     static const int modelListSize;
 
     CrcCheck ();
-    quint32 computeCrcVal(QByteArray buf, int index);
+    quint16 CrcCheck::computeCrcVal(QByteArray buf, int modelIndex);
 
 private:
-    quint32 reflect(quint8 width, quint32 val);
+    //quint32 reflect(quint8 width, quint32 val);
 };
 

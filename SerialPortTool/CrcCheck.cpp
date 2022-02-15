@@ -3,7 +3,7 @@
 #include <QDebug>
 
 const ParamModel CrcCheck ::modelList[] = {
-    //                     宽度  多项式       初始值       结果异或值   输入反转 输出反转
+    //                     宽度  多项式      初始值     结果异或值    输入反转 输出反转
     { "CRC-4/ITU",          4,  0x03,       0x00,       0x00,       true,  true  },
     { "CRC-5/EPC",          5,  0x09,       0x09,       0x00,       false, false },
     { "CRC-5/ITU",          5,  0x15,       0x00,       0x00,       true,  true  },
@@ -34,73 +34,136 @@ CrcCheck ::CrcCheck ()
 
 }
 
-/**
- * @brief 二进制位转换
- * @param width 数字宽度
- * @param val   要转的值
- * @return      转换后的值
- */
-quint32 CrcCheck::reflect(quint8 width, quint32 val)
-{
-    quint32 valRet = 0;
-    for(int i = 0; i < width; i++)
-    {
-        valRet <<= 1;
-        valRet |= val & 1;
-        val >>= 1;
+
+/// <summary>
+/// 二进制颠倒
+/// </summary>
+/// <param name="n">要颠倒的值(8位)</param>
+/// <returns>颠倒后的值</returns>
+quint8 reverseBits(quint8 n) {
+    quint8 rev = 0;
+    for (int i = 0; i < 8 && n > 0; ++i) {
+        rev |= (n & 1) << (7 - i);
+        n >>= 1;
     }
-    return valRet;
+    return rev;
 }
 
-/**
- * @brief CrcCheck::computeCrcVal
- * @param buf
- * @param index
- * @return
- */
-quint32 CrcCheck::computeCrcVal(QByteArray buf, int index)
-{
-    quint16 crcVal = this->modelList[index].init;
-    quint16 poly = this->modelList[index].poly;
-    //quint16 xorout = this->modelList[index].xorout;
-    bool refin = this->modelList[index].refin;
-    //bool refout = this->modelList[index].refout;
+/// <summary>
+/// 二进制颠倒
+/// </summary>
+/// <param name="n">要颠倒的值(16位)</param>
+/// <returns>颠倒后的值</returns>
+quint16 reverseBits(quint16 n) {
+    quint16 rev = 0;
+    for (int i = 0; i < 16 && n > 0; ++i) {
+        rev |= (n & 1) << (15 - i);
+        n >>= 1;
+    }
+    return rev;
+}
 
-    if(refin)
+/// <summary>
+/// 二进制颠倒
+/// </summary>
+/// <param name="n">要颠倒的值(32位)</param>
+/// <returns>颠倒后的值</returns>
+quint32 reverseBits(quint32 n) {
+    quint32 rev = 0;
+    for (int i = 0; i < 32 && n > 0; ++i) {
+        rev |= (n & 1) << (31 - i);
+        n >>= 1;
+    }
+    return rev;
+}
+
+/// <summary>
+/// 计算CRC校验值
+/// </summary>
+/// <param name="buf">要计算的数组</param>
+/// <param name="modelIndex">参数模型索引</param>
+/// <returns>crc校验和</returns>
+quint16 CrcCheck::computeCrcVal(QByteArray buf, int modelIndex)
+{
+    int bufCount = buf.count();    // 数组的长度
+    quint8 modelWidth = modelList[modelIndex].width;    // 参数模型宽度
+    quint32 crc32;
+    if (modelWidth == 32)
     {
-        poly = reflect(16, poly);
-        for (int x = 0; x < buf.size(); x++)
-        {
-            crcVal ^= buf.at(x);
-            for (int y = 0; y < 8; y++)
-            {
-                if (crcVal & 0x0001)
-                {
-                    crcVal >>= 1;
-                    crcVal ^= poly;
+        quint32 poly = reverseBits(modelList[modelIndex].poly);
+        quint32 xorout = modelList[modelIndex].xorout;
+        quint32 crc = modelList[modelIndex].init;
+        for (int x = 0; x < bufCount; x++) {
+            crc = crc ^ buf[x];
+            for (int y = 0; y < 8; y++) {
+                if ((crc & 0x0001) == 1) {
+                    crc = crc >> 1;
+                    crc = crc ^ poly;
                 }
                 else
-                    crcVal >>= 1;
+                    crc = crc >> 1;
             }
         }
+        crc = crc ^ xorout;
+        crc32 = crc;
+    }
+    else if (modelWidth == 16)
+    {
+        quint16 poly = (quint16)modelList[modelIndex].poly;
+        quint16 xorout = modelList[modelIndex].xorout;
+        quint16 crc = modelList[modelIndex].init;
+        if (modelList[modelIndex].refin)    // 输入输出反转
+        {
+            poly = reverseBits(poly);
+            for (int x = 0; x < bufCount; x++) {
+                crc = crc ^ buf[x];
+                for (int y = 0; y < 8; y++) {
+                    if (crc & 0x0001) {
+                        crc = crc >> 1;
+                        crc = crc ^ poly;
+                    }
+                    else
+                        crc = crc >> 1;
+                }
+            }
+        }
+        else                                // 输入输出不反转
+        {
+            for (int x = 0; x < bufCount; x++) {
+                crc = crc ^ (buf[x] << 8);
+                for (int y = 0; y < 8; y++) {
+                    if (crc & 0x8000) {
+                        crc = crc << 1;
+                        crc = crc ^ poly;
+                    }
+                    else
+                        crc = crc << 1;
+                }
+            }
+        }
+        crc = crc ^ xorout;
+        crc32 = crc;
     }
     else
     {
-        for (int x = 0; x < buf.size(); x++)
-        {
-            crcVal ^= buf.at(x);
-            for (int y = 0; y < 8; y++)
-            {
-                if (crcVal & 0x0001)
-                {
-                    crcVal <<= 1;
-                    crcVal ^= poly;
+        quint8 poly = reverseBits((quint8)modelList[modelIndex].poly);
+        quint8 xorout = modelList[modelIndex].xorout;
+        quint8 crc = modelList[modelIndex].init;
+        for (int x = 0; x < bufCount; x++) {
+            crc = crc ^ buf[x];
+            for (int y = 0; y < 8; y++) {
+                if ((crc & 0x0001) == 1) {
+                    crc = crc >> 1;
+                    crc = crc ^ poly;
                 }
                 else
-                    crcVal <<= 1;
+                    crc = crc >> 1;
             }
         }
+        crc = crc ^ xorout;
+        crc32 = crc;
     }
 
-    return (quint32)crcVal;
+    return crc32;
 }
+
