@@ -618,9 +618,12 @@ QToolButton#btnSend:hover{
    <addaction name="start"/>
    <addaction name="pause"/>
    <addaction name="stop"/>
+   <addaction name="separator"/>
    <addaction name="clean"/>
    <addaction name="CRC"/>
    <addaction name="CMD"/>
+   <addaction name="separator"/>
+   <addaction name="setting"/>
   </widget>
   <action name="start">
    <property name="checkable">
@@ -692,6 +695,18 @@ QToolButton#btnSend:hover{
    </property>
    <property name="toolTip">
     <string>快捷指令</string>
+   </property>
+  </action>
+  <action name="setting">
+   <property name="icon">
+    <iconset resource="MainWindow.qrc">
+     <normaloff>:/img/设置</normaloff>:/img/设置</iconset>
+   </property>
+   <property name="text">
+    <string>设置</string>
+   </property>
+   <property name="toolTip">
+    <string>设置</string>
    </property>
   </action>
  </widget>

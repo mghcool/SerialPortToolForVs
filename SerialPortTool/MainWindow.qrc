@@ -8,5 +8,6 @@
         <file alias="发送">img/send.svg</file>
         <file alias="启动">img/start.svg</file>
         <file alias="停止">img/stop.svg</file>
+        <file alias="设置">img/setting.svg</file>
     </qresource>
 </RCC>
