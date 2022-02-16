@@ -10,4 +10,7 @@
         <file alias="停止">img/stop.svg</file>
         <file alias="设置">img/setting.svg</file>
     </qresource>
+    <qresource prefix="/qt/etc">
+        <file>qt.conf</file>
+    </qresource>
 </RCC>
