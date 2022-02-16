@@ -1,10 +1,14 @@
 ﻿#include "MainWindow.h"
+#include "CrcCheck.h"
 #include <QSerialPort>
 #include <QSerialPortInfo>
+#include <QStandardPaths>
 #include <QMessageBox>
+#include <QSettings>
+#include <QFileInfo>
 #include <QDebug>
 #include <QTimer>
-#include "CrcCheck.h"
+#include <QDir>
 
 QSerialPort serial;             //串口对象
 QList<QSerialPortInfo> portList;//串口列表
@@ -12,10 +16,68 @@ QLabel* lblStatus;             //状态栏状态标签
 QLabel* lblRxByte;             //状态栏接收字节标签
 QLabel* lblTxByte;             //状态栏发送字节标签
 CrcCheck crcObj;
+QSettings* qSettings;
+SettingInfo settingInfo;
+
+// 重载窗口关闭事件
+void MainWindow::closeEvent(QCloseEvent* e)
+{
+
+}
 
 MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
 {
     ui.setupUi(this);
+    
+    // 读取配置
+    QString configDir = QStandardPaths::writableLocation(QStandardPaths::ConfigLocation); // 获取标准用户配置文件夹
+    QDir settingDir(configDir);
+    QString settingPath = settingDir.absoluteFilePath(SETTING_FILENAME);    // 配置文件全路径
+    QFileInfo info(settingPath);
+    qSettings = new QSettings(settingPath, QSettings::IniFormat);  // 载入配置文件
+    qSettings->setIniCodec("UTF-8");                          // 设置配置文件编码
+    if (info.exists())
+    {
+        // 如果配置文件存在，就读取配置文件
+        settingInfo.BaudRateIndex = qSettings->value("SerialPort/BaudRate").toInt();
+        settingInfo.DataBitsIndex = qSettings->value("SerialPort/DataBits").toInt();
+        settingInfo.ParityIndex = qSettings->value("SerialPort/Parity").toInt();
+        settingInfo.StopBitsIndex = qSettings->value("SerialPort/StopBits").toInt();
+        settingInfo.FlowControlIndex = qSettings->value("SerialPort/FlowControl").toInt();
+        settingInfo.RxHex = qSettings->value("RxdSetting/Hex").toBool();
+        settingInfo.RxWordWrap = qSettings->value("RxdSetting/WordWrap").toBool();
+        settingInfo.RxShowTx = qSettings->value("RxdSetting/ShowRx").toBool();
+        settingInfo.RxShowTime = qSettings->value("RxdSetting/ShowTime").toBool();
+        settingInfo.TxHex = qSettings->value("TxdSetting/Hex").toBool();
+        settingInfo.TxCrc = qSettings->value("TxdSetting/Crc").toBool();
+        settingInfo.TxCrcModel = qSettings->value("TxdSetting/CrcModel").toInt();
+    }
+    else// 如果配置文件不存在，就初始化配置文件
+    {
+        // 串口设置
+        qSettings->beginGroup("SerialPort");
+        qSettings->setValue("BaudRate", 3);       // 波特率
+        qSettings->setValue("DataBits", 3);       // 数据位
+        qSettings->setValue("Parity", 0);         // 校验位
+        qSettings->setValue("StopBits", 0);       // 停止位
+        qSettings->setValue("FlowControl", 0);    // 流控
+        qSettings->endGroup();
+        // 接受设置
+        qSettings->beginGroup("RxdSetting");
+        qSettings->setValue("Hex", false);        // 是否16进制
+        qSettings->setValue("WordWrap", false);   // 自动换行
+        qSettings->setValue("ShowRx", false);     // 显示发送
+        qSettings->setValue("ShowTime", false);   // 显示时间
+        qSettings->endGroup();
+        // 发送设置
+        qSettings->beginGroup("TxdSetting");
+        qSettings->setValue("Hex", false);        // 是否16进制
+        qSettings->setValue("Crc", false);        // 启用CRC校验
+        qSettings->setValue("CrcModel", 0);       // CRC计算模型
+        qSettings->endGroup();
+        // 设置配置变量
+        settingInfo = { 3,3 };
+    }
 
     //创建状态标签
     lblStatus = new QLabel();
@@ -35,23 +97,33 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
     lblTxByte->setMinimumWidth(100);
     lblTxByte->setText("Tx:");
 
-    //设置默认选项
-    ui.comBaudRate->setCurrentIndex(3);
-    ui.comDataBits->setCurrentIndex(3);
-    ui.stop->setChecked(true);
-
     //添加crc选项
     for (int i = 0; i < crcObj.modelListSize; i++)
     {
         ui.cmbCRCType->addItem(crcObj.modelList[i].name);
     }
 
+    //设置默认选项
+    ui.comBaudRate->setCurrentIndex(settingInfo.BaudRateIndex);         // 波特率
+    ui.comDataBits->setCurrentIndex(settingInfo.DataBitsIndex);         // 数据位
+    ui.comParity->setCurrentIndex(settingInfo.ParityIndex);             // 校验位
+    ui.comStopBits->setCurrentIndex(settingInfo.StopBitsIndex);         // 停止位
+    ui.comFlowControl->setCurrentIndex(settingInfo.FlowControlIndex);   // 流控
+    ui.radioRxHex->setChecked(settingInfo.RxHex);                       // 是否16进制
+    ui.cbxWordWrap->setChecked(settingInfo.RxWordWrap);                 // 自动换行
+    ui.cbxShowSend->setChecked(settingInfo.RxShowTx);                   // 显示发送
+    ui.cbxShowTime->setChecked(settingInfo.RxShowTime);                 // 显示时间
+    ui.radioTxHex->setChecked(settingInfo.TxHex);                       // 是否16进制
+    ui.cbxCRC->setChecked(settingInfo.TxCrc);                           // 启用CRC校验
+    ui.cmbCRCType->setCurrentIndex(settingInfo.TxCrcModel);             // CRC计算模型
+    ui.lineEditRepeat->setText("1000");                                 // 重复发送间隔
+
     //更新串口列表
     UpdatePortList();
 
     //定义串口更新定时器
     timerUpdatePort = new QTimer(this);
-    timerUpdatePort->start(1000);
+    timerUpdatePort->start(PORT_UPDATE_INTERVAL);
 
     //连接信号槽
     connect(&serial, SIGNAL(readyRead()), this, SLOT(slot_PortReceive()));
@@ -61,9 +133,30 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
 //窗体析构
 MainWindow::~MainWindow()
 {
+    // 保存串口设置
+    qSettings->setValue("SerialPort/BaudRate", ui.comBaudRate->currentIndex());         // 波特率
+    qSettings->setValue("SerialPort/DataBits", ui.comDataBits->currentIndex());         // 数据位
+    qSettings->setValue("SerialPort/Parity", ui.comParity->currentIndex());             // 校验位
+    qSettings->setValue("SerialPort/StopBits", ui.comStopBits->currentIndex());         // 停止位
+    qSettings->setValue("SerialPort/FlowControl", ui.comFlowControl->currentIndex());   // 流控
+    // 保存接受设置
+    qSettings->setValue("RxdSetting/Hex", ui.radioRxHex->isChecked());                  // 是否16进制
+    qSettings->setValue("RxdSetting/WordWrap", ui.cbxWordWrap->isChecked());            // 自动换行
+    qSettings->setValue("RxdSetting/ShowRx", ui.cbxShowSend->isChecked());              // 显示发送
+    qSettings->setValue("RxdSetting/ShowTime", ui.cbxShowTime->isChecked());            // 显示时间
+    // 保存发送设置
+    qSettings->setValue("TxdSetting/Hex", ui.radioTxHex->isChecked());                  // 是否16进制
+    qSettings->setValue("TxdSetting/Crc", ui.cbxCRC->isChecked());                      // 启用CRC校验
+    qSettings->setValue("TxdSetting/CrcModel", ui.cmbCRCType->currentIndex());          // CRC计算模型
+
+    // 释放资源
     serial.close();
     timerUpdatePort->stop();
+    delete lblStatus;
+    delete lblRxByte;
+    delete lblTxByte;
     delete timerUpdatePort;
+    delete qSettings;
 }
 
 //更新串口列表
@@ -210,16 +303,8 @@ void MainWindow::on_btnSend_clicked()
     if (ui.cbxCRC->isChecked())
     {
         quint32 crcVal = crcObj.computeCrcVal(sendData, ui.cmbCRCType->currentIndex());
-        if (ui.cbxCRCExchange->isChecked())
-        {
-            sendData.append(crcVal & 0x00FF);
-            sendData.append(crcVal >> 8);
-        }
-        else
-        {
-            sendData.append(crcVal >> 8);
-            sendData.append(crcVal & 0x00FF);
-        }
+        sendData.append(crcVal & 0x00FF);
+        sendData.append(crcVal >> 8);
     }
     // 写入发送缓存区
     serial.write(sendData);
