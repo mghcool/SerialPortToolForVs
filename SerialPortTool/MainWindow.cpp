@@ -39,16 +39,19 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
     if (info.exists())
     {
         // 如果配置文件存在，就读取配置文件
+        // 串口设置
         settingInfo.BaudRateIndex = qSettings->value("SerialPort/BaudRate").toInt();
         settingInfo.DataBitsIndex = qSettings->value("SerialPort/DataBits").toInt();
         settingInfo.ParityIndex = qSettings->value("SerialPort/Parity").toInt();
         settingInfo.StopBitsIndex = qSettings->value("SerialPort/StopBits").toInt();
         settingInfo.FlowControlIndex = qSettings->value("SerialPort/FlowControl").toInt();
+        // 接收设置
         settingInfo.RxHex = qSettings->value("RxdSetting/Hex").toBool();
-        settingInfo.RxWordWrap = qSettings->value("RxdSetting/WordWrap").toBool();
-        settingInfo.RxShowTx = qSettings->value("RxdSetting/ShowRx").toBool();
+        settingInfo.RxWordWrap = qSettings->value("RxdSetting/WordWrap").toBool();        
         settingInfo.RxShowTime = qSettings->value("RxdSetting/ShowTime").toBool();
+        // 发送设置
         settingInfo.TxHex = qSettings->value("TxdSetting/Hex").toBool();
+        settingInfo.ShowTx = qSettings->value("RxdSetting/ShowTx").toBool();
         settingInfo.TxCrc = qSettings->value("TxdSetting/Crc").toBool();
         settingInfo.TxCrcModel = qSettings->value("TxdSetting/CrcModel").toInt();
     }
@@ -62,16 +65,16 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
         qSettings->setValue("StopBits", 0);       // 停止位
         qSettings->setValue("FlowControl", 0);    // 流控
         qSettings->endGroup();
-        // 接受设置
+        // 接收设置
         qSettings->beginGroup("RxdSetting");
         qSettings->setValue("Hex", false);        // 是否16进制
         qSettings->setValue("WordWrap", false);   // 自动换行
-        qSettings->setValue("ShowRx", false);     // 显示发送
         qSettings->setValue("ShowTime", false);   // 显示时间
         qSettings->endGroup();
         // 发送设置
         qSettings->beginGroup("TxdSetting");
         qSettings->setValue("Hex", false);        // 是否16进制
+        qSettings->setValue("ShowTx", false);     // 显示发送
         qSettings->setValue("Crc", false);        // 启用CRC校验
         qSettings->setValue("CrcModel", 0);       // CRC计算模型
         qSettings->endGroup();
@@ -111,9 +114,9 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
     ui.comFlowControl->setCurrentIndex(settingInfo.FlowControlIndex);   // 流控
     ui.radioRxHex->setChecked(settingInfo.RxHex);                       // 是否16进制
     ui.cbxWordWrap->setChecked(settingInfo.RxWordWrap);                 // 自动换行
-    ui.cbxShowSend->setChecked(settingInfo.RxShowTx);                   // 显示发送
     ui.cbxShowTime->setChecked(settingInfo.RxShowTime);                 // 显示时间
     ui.radioTxHex->setChecked(settingInfo.TxHex);                       // 是否16进制
+    ui.cbxShowSend->setChecked(settingInfo.ShowTx);                     // 显示发送
     ui.cbxCRC->setChecked(settingInfo.TxCrc);                           // 启用CRC校验
     ui.cmbCRCType->setCurrentIndex(settingInfo.TxCrcModel);             // CRC计算模型
     ui.lineEditRepeat->setText("1000");                                 // 重复发送间隔
@@ -142,10 +145,10 @@ MainWindow::~MainWindow()
     // 保存接受设置
     qSettings->setValue("RxdSetting/Hex", ui.radioRxHex->isChecked());                  // 是否16进制
     qSettings->setValue("RxdSetting/WordWrap", ui.cbxWordWrap->isChecked());            // 自动换行
-    qSettings->setValue("RxdSetting/ShowRx", ui.cbxShowSend->isChecked());              // 显示发送
     qSettings->setValue("RxdSetting/ShowTime", ui.cbxShowTime->isChecked());            // 显示时间
     // 保存发送设置
     qSettings->setValue("TxdSetting/Hex", ui.radioTxHex->isChecked());                  // 是否16进制
+    qSettings->setValue("RxdSetting/ShowTx", ui.cbxShowSend->isChecked());              // 显示发送
     qSettings->setValue("TxdSetting/Crc", ui.cbxCRC->isChecked());                      // 启用CRC校验
     qSettings->setValue("TxdSetting/CrcModel", ui.cmbCRCType->currentIndex());          // CRC计算模型
 

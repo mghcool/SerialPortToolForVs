@@ -16,10 +16,10 @@ typedef struct
     int StopBitsIndex;      // 停止位下拉框索引
     int FlowControlIndex;   // 流控下拉框索引
     bool RxHex;             // 接收设置为HEX
-    bool RxWordWrap;        // 接收自动换行
-    bool RxShowTx;          // 显示发送
+    bool RxWordWrap;        // 接收自动换行    
     bool RxShowTime;        // 显示时间
     bool TxHex;             // 发送设置为HEX
+    bool ShowTx;          // 显示发送
     bool TxCrc;             // 发送添加CRC校验
     int TxCrcModel;         // CRC计算模型下拉框索引
 } SettingInfo;
