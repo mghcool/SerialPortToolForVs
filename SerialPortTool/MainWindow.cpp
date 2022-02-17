@@ -10,6 +10,7 @@
 #include <QTimer>
 #include <QDir>
 #include <QDomDocument>
+#include <QDateTime>
 
 QSerialPort serial;             //串口对象
 QList<QSerialPortInfo> portList;//串口列表
@@ -396,6 +397,21 @@ void MainWindow::on_btnSend_clicked()
         sendData.append(crcVal & 0x00FF);
         sendData.append(crcVal >> 8);
     }
+
+    if (ui.cbxShowSend->isChecked())
+    {
+        if (ui.cbxShowTime->isChecked())
+        {
+            QDateTime nowDataTime = QDateTime::currentDateTime();
+            QString timeStr = nowDataTime.toString("[hh:mm:ss.zzz] ");
+            ui.textShowRx->append(timeStr + inputText);
+        }
+        else
+        {
+            ui.textShowRx->append(inputText);
+        }
+    }
+
     // 写入发送缓存区
     serial.write(sendData);
     TxdCount += sendData.count();
@@ -421,6 +437,13 @@ void MainWindow::slot_PortReceive()
 
         if (ui.cbxWordWrap->isChecked())//换行显示
         {
+            if (ui.cbxShowTime->isChecked())
+            {
+                QDateTime nowDataTime = QDateTime::currentDateTime();
+                QString timeStr = nowDataTime.toString("[hh:mm:ss.zzz] ");
+                str += timeStr;
+            }
+            
             ui.textShowRx->append(str);
         }
         else                            //不换行显示
