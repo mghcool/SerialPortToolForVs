@@ -36,6 +36,7 @@ private:
     Ui::MainWindowClass ui;
     QTimer* timerUpdatePort;
     void UpdatePortList();
+    void AddHistory(QString text);
 
 protected:
     void closeEvent(QCloseEvent* event); // 重载窗口关闭事件

@@ -9,6 +9,7 @@
 #include <QDebug>
 #include <QTimer>
 #include <QDir>
+#include <QDomDocument>
 
 QSerialPort serial;             //串口对象
 QList<QSerialPortInfo> portList;//串口列表
@@ -18,6 +19,9 @@ QLabel* lblTxByte;             //状态栏发送字节标签
 CrcCheck crcObj;
 QSettings* qSettings;
 SettingInfo settingInfo;
+QFile apacheFile;
+QDomDocument apacheDoc;
+QDomElement apacheDocRoot;
 
 // 重载窗口关闭事件
 void MainWindow::closeEvent(QCloseEvent* e)
@@ -29,10 +33,10 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
 {
     ui.setupUi(this);
     
+    // 获取标准用户配置文件夹
+    QDir configDir(QStandardPaths::writableLocation(QStandardPaths::ConfigLocation));
     // 读取配置
-    QString configDir = QStandardPaths::writableLocation(QStandardPaths::ConfigLocation); // 获取标准用户配置文件夹
-    QDir settingDir(configDir);
-    QString settingPath = settingDir.absoluteFilePath(SETTING_FILENAME);    // 配置文件全路径
+    QString settingPath = configDir.absoluteFilePath(SETTING_FILENAME);    // 配置文件全路径
     QFileInfo info(settingPath);
     qSettings = new QSettings(settingPath, QSettings::IniFormat);  // 载入配置文件
     qSettings->setIniCodec("UTF-8");                          // 设置配置文件编码
@@ -53,7 +57,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
         settingInfo.TxHex = qSettings->value("TxdSetting/Hex").toBool();
         settingInfo.ShowTx = qSettings->value("RxdSetting/ShowTx").toBool();
         settingInfo.TxCrc = qSettings->value("TxdSetting/Crc").toBool();
-        settingInfo.TxCrcModel = qSettings->value("TxdSetting/CrcModel").toInt();
+        settingInfo.TxCrcModel = qSettings->value("TxdSetting/CrcModel").toInt(); 
     }
     else// 如果配置文件不存在，就初始化配置文件
     {
@@ -77,6 +81,18 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
         qSettings->setValue("ShowTx", false);     // 显示发送
         qSettings->setValue("Crc", false);        // 启用CRC校验
         qSettings->setValue("CrcModel", 0);       // CRC计算模型
+        qSettings->endGroup();
+        // 发送历史
+        qSettings->beginGroup("History");
+        qSettings->setValue("Line0", "");
+        qSettings->setValue("Line1", "");
+        qSettings->setValue("Line2", "");
+        qSettings->setValue("Line4", "");
+        qSettings->setValue("Line5", "");
+        qSettings->setValue("Line6", "");
+        qSettings->setValue("Line7", "");
+        qSettings->setValue("Line8", "");
+        qSettings->setValue("Line9", "");
         qSettings->endGroup();
         // 设置配置变量
         settingInfo = { 3,3 };
@@ -124,6 +140,44 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
     //更新串口列表
     UpdatePortList();
 
+    // 读取缓存
+    apacheFile.setFileName(configDir.absoluteFilePath("cache.xml"));
+    if (apacheFile.exists())
+    {
+        apacheFile.open(QFile::ReadOnly);
+        apacheDoc.setContent(&apacheFile);
+        apacheFile.close();
+        apacheDocRoot = apacheDoc.documentElement();
+        QDomNode historyNode = apacheDocRoot.lastChild(); //获得第最后一个子节点History
+
+        if (!historyNode.isNull())
+        {
+            QDomNodeList list = historyNode.childNodes();
+            for (int i = 0; i < list.count(); i++)
+            {
+                QString val = list.at(i).attributes().item(0).nodeValue();
+                ui.cmbSendHistory->insertItem(i, val);
+            }
+        }
+    }
+    else
+    {
+        apacheFile.open(QFile::WriteOnly | QFile::Truncate);
+        // 创建xml头部格式
+        QDomProcessingInstruction instruction;
+        instruction = apacheDoc.createProcessingInstruction("xml", "version=\"1.0\" encoding=\"UTF-8\"");
+        apacheDoc.appendChild(instruction);
+        // 创建root节点
+        apacheDocRoot = apacheDoc.createElement("root");
+        apacheDocRoot.appendChild(apacheDoc.createElement("CMD"));
+        apacheDocRoot.appendChild(apacheDoc.createElement("History"));
+        apacheDoc.appendChild(apacheDocRoot);
+
+        QTextStream stream(&apacheFile);
+        apacheDoc.save(stream, 4);  //4 缩进字符
+        apacheFile.close();
+    }
+
     //定义串口更新定时器
     timerUpdatePort = new QTimer(this);
     timerUpdatePort->start(PORT_UPDATE_INTERVAL);
@@ -160,6 +214,12 @@ MainWindow::~MainWindow()
     delete lblTxByte;
     delete timerUpdatePort;
     delete qSettings;
+
+    // 保存缓存文件
+    apacheFile.open(QFile::WriteOnly | QFile::Truncate);
+    QTextStream stream(&apacheFile);
+    apacheDoc.save(stream, 4);  //4 缩进字符
+    apacheFile.close();
 }
 
 //更新串口列表
@@ -287,6 +347,23 @@ void MainWindow::on_stop_triggered(bool checked)
     }
 }
 
+//添加一条历史记录
+void MainWindow::AddHistory(QString text)
+{
+    if (ui.cmbSendHistory->itemText(0) != text)
+    {
+        ui.cmbSendHistory->insertItem(0, text);
+        ui.cmbSendHistory->setCurrentIndex(0);
+
+        int historyCount = ui.cmbSendHistory->count();
+        QDomNode historyNode = apacheDocRoot.lastChild(); //获得第最后一个子节点History
+        QDomElement val = apacheDoc.createElement("text");
+        val.setAttribute("val", text);
+        QDomNode first = historyNode.firstChild();
+        historyNode.insertBefore(val, first);
+    }
+}
+
 //发送一条信息
 void MainWindow::on_btnSend_clicked()
 {
@@ -302,6 +379,7 @@ void MainWindow::on_btnSend_clicked()
     QByteArray sendData;
     if (ui.radioTxAscii->isChecked()) sendData = inputText.toUtf8();   //按Ascii发送
     else sendData = QByteArray::fromHex(inputText.toLatin1().data()); //按Hex发送
+
     //CRC校验
     if (ui.cbxCRC->isChecked())
     {
@@ -312,11 +390,7 @@ void MainWindow::on_btnSend_clicked()
     // 写入发送缓存区
     serial.write(sendData);
     //添加到历史区
-    if (ui.cmbSendHistory->itemText(0) != inputText)
-    {
-        ui.cmbSendHistory->insertItem(0, inputText);
-        ui.cmbSendHistory->setCurrentIndex(0);
-    }
+    this->AddHistory(inputText);
 }
 
 
