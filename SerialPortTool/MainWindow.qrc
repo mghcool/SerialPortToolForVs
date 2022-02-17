@@ -2,7 +2,6 @@
     <qresource prefix="/img">
         <file alias="清理">img/clean.svg</file>
         <file alias="CMD">img/cmd.svg</file>
-        <file alias="CRC">img/crc.svg</file>
         <file alias="ICON">img/icon.svg</file>
         <file alias="暂停">img/pause.svg</file>
         <file alias="发送">img/send.svg</file>

@@ -663,7 +663,6 @@ p, li { white-space: pre-wrap; }
    <addaction name="stop"/>
    <addaction name="separator"/>
    <addaction name="clean"/>
-   <addaction name="CRC"/>
    <addaction name="CMD"/>
    <addaction name="separator"/>
    <addaction name="setting"/>
@@ -714,18 +713,6 @@ p, li { white-space: pre-wrap; }
    </property>
    <property name="text">
     <string>清理</string>
-   </property>
-  </action>
-  <action name="CRC">
-   <property name="icon">
-    <iconset resource="MainWindow.qrc">
-     <normaloff>:/img/CRC</normaloff>:/img/CRC</iconset>
-   </property>
-   <property name="text">
-    <string>CRC校验</string>
-   </property>
-   <property name="toolTip">
-    <string>CRC校验</string>
    </property>
   </action>
   <action name="CMD">
