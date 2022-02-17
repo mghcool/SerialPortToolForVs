@@ -49,4 +49,5 @@ private slots:
     void on_btnSend_clicked();
     void slot_PortReceive();
     void slot_UpdatePort();
+    void on_cmbSendHistory_activated(const QString& arg1);
 };

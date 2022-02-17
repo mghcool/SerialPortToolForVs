@@ -23,6 +23,9 @@ QFile apacheFile;
 QDomDocument apacheDoc;
 QDomElement apacheDocRoot;
 
+int RxdCount;       // 接收字节计数
+int TxdCount;       // 发送字节计数
+
 // 重载窗口关闭事件
 void MainWindow::closeEvent(QCloseEvent* e)
 {
@@ -110,11 +113,11 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
     lblRxByte = new QLabel();
     ui.statusbar->addWidget(lblRxByte);
     lblRxByte->setMinimumWidth(100);
-    lblRxByte->setText("Rx:");
+    lblRxByte->setText("Rx: 0 Bytes");
     lblTxByte = new QLabel();
     ui.statusbar->addWidget(lblTxByte);
     lblTxByte->setMinimumWidth(100);
-    lblTxByte->setText("Tx:");
+    lblTxByte->setText("Tx: 0 Bytes");
 
     //添加crc选项
     for (int i = 0; i < crcObj.modelListSize; i++)
@@ -364,6 +367,12 @@ void MainWindow::AddHistory(QString text)
     }
 }
 
+// 选中历史记录
+void MainWindow::on_cmbSendHistory_activated(const QString& arg1)
+{
+    ui.textEditTx->setText(arg1);
+}
+
 //发送一条信息
 void MainWindow::on_btnSend_clicked()
 {
@@ -389,6 +398,9 @@ void MainWindow::on_btnSend_clicked()
     }
     // 写入发送缓存区
     serial.write(sendData);
+    TxdCount += sendData.count();
+    lblTxByte->setText("Tx: " + QString::number(TxdCount) + " Bytes");
+
     //添加到历史区
     this->AddHistory(inputText);
 }
@@ -418,6 +430,10 @@ void MainWindow::slot_PortReceive()
             tc.insertText(str + " ");
         }
     }
+    
+    RxdCount += buf.count();
+    lblRxByte->setText("Rx: " + QString::number(RxdCount) + " Bytes");
+
     buf.clear();
 }
 
@@ -425,4 +441,8 @@ void MainWindow::slot_PortReceive()
 void MainWindow::on_clean_triggered()
 {
     ui.textShowRx->clear();
+    RxdCount = 0;
+    TxdCount  = 0;
+    lblTxByte->setText("Tx: 0 Bytes");
+    lblRxByte->setText("Rx: 0 Bytes");
 }
