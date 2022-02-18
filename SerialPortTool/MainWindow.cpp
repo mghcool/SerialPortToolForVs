@@ -139,7 +139,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
     ui.cbxShowSend->setChecked(settingInfo.ShowTx);                     // 显示发送
     ui.cbxCRC->setChecked(settingInfo.TxCrc);                           // 启用CRC校验
     ui.cmbCRCType->setCurrentIndex(settingInfo.TxCrcModel);             // CRC计算模型
-    ui.lineEditRepeat->setText("1000");                                 // 重复发送间隔
+    ui.spinBoxRepeat->setValue(1000);                                   // 重复发送间隔
 
     //更新串口列表
     UpdatePortList();
@@ -189,6 +189,10 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
     //连接信号槽
     connect(&serial, SIGNAL(readyRead()), this, SLOT(slot_PortReceive()));
     connect(timerUpdatePort, SIGNAL(timeout()), this, SLOT(slot_UpdatePort()));
+
+    // 重复发送定时器
+    timerRepeat = new QTimer(this);
+    connect(timerRepeat, SIGNAL(timeout()), this, SLOT(slot_timerRepeat()));
 }
 
 //窗体析构
@@ -374,21 +378,13 @@ void MainWindow::on_cmbSendHistory_activated(const QString& arg1)
     ui.textEditTx->setText(arg1);
 }
 
-//发送一条信息
-void MainWindow::on_btnSend_clicked()
+// 发送数据
+void MainWindow::SendDatas(QString text)
 {
-    //如果串口没有打开，那就打开串口
-    if (!ui.start->isChecked())
-    {
-        on_start_triggered(true);
-        return;
-    }
-    //获取输入窗口sendData的数据
-    QString inputText = ui.textEditTx->toPlainText();
     //转换数据
     QByteArray sendData;
-    if (ui.radioTxAscii->isChecked()) sendData = inputText.toUtf8();   //按Ascii发送
-    else sendData = QByteArray::fromHex(inputText.toLatin1().data()); //按Hex发送
+    if (ui.radioTxAscii->isChecked()) sendData = text.toUtf8();   //按Ascii发送
+    else sendData = QByteArray::fromHex(text.toLatin1().data()); //按Hex发送
 
     //CRC校验
     if (ui.cbxCRC->isChecked())
@@ -404,21 +400,34 @@ void MainWindow::on_btnSend_clicked()
         {
             QDateTime nowDataTime = QDateTime::currentDateTime();
             QString timeStr = nowDataTime.toString("[hh:mm:ss.zzz] ");
-            ui.textShowRx->append(timeStr + inputText);
+            ui.textShowRx->append(timeStr + text);
         }
         else
         {
-            ui.textShowRx->append(inputText);
+            ui.textShowRx->append(text);
         }
     }
-
     // 写入发送缓存区
     serial.write(sendData);
     TxdCount += sendData.count();
     lblTxByte->setText("Tx: " + QString::number(TxdCount) + " Bytes");
 
-    //添加到历史区
-    this->AddHistory(inputText);
+    //添加到历史发送
+    this->AddHistory(text);
+}
+
+//发送一条信息
+void MainWindow::on_btnSend_clicked()
+{
+    //如果串口没有打开，那就打开串口
+    if (!ui.start->isChecked())
+    {
+        on_start_triggered(true);
+        return;
+    }
+    //获取输入窗口sendData的数据
+    QString inputText = ui.textEditTx->toPlainText();
+    SendDatas(inputText);
 }
 
 
@@ -468,4 +477,29 @@ void MainWindow::on_clean_triggered()
     TxdCount  = 0;
     lblTxByte->setText("Tx: 0 Bytes");
     lblRxByte->setText("Rx: 0 Bytes");
+}
+
+// 重复发送复选框
+void MainWindow::on_cbxRepeat_clicked(bool state) 
+{
+    if (state)
+    {
+        timerRepeat->start(ui.spinBoxRepeat->value());
+    }
+    else
+    {
+        timerRepeat->stop();
+    }
+}
+
+// 重复发送定时器槽
+void MainWindow::slot_timerRepeat()
+{
+    if (ui.start->isChecked())
+    {
+        qDebug() << "发送";
+        //获取输入窗口sendData的数据
+        QString inputText = ui.textEditTx->toPlainText();
+        SendDatas(inputText);
+    }
 }

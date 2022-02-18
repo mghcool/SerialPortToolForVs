@@ -35,8 +35,10 @@ public:
 private:
     Ui::MainWindowClass ui;
     QTimer* timerUpdatePort;
+    QTimer* timerRepeat;
     void UpdatePortList();
     void AddHistory(QString text);
+    void SendDatas(QString text);
 
 protected:
     void closeEvent(QCloseEvent* event); // 重载窗口关闭事件
@@ -49,5 +51,7 @@ private slots:
     void on_btnSend_clicked();
     void slot_PortReceive();
     void slot_UpdatePort();
+    void slot_timerRepeat();
     void on_cmbSendHistory_activated(const QString& arg1);
+    void on_cbxRepeat_clicked(bool state);
 };
