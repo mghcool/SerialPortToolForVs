@@ -450,7 +450,7 @@ void MainWindow::slot_PortReceive()
             {
                 QDateTime nowDataTime = QDateTime::currentDateTime();
                 QString timeStr = nowDataTime.toString("[hh:mm:ss.zzz] ");
-                str += timeStr;
+                str = timeStr + str;
             }
             
             ui.textShowRx->append(str);
