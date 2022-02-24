@@ -54,4 +54,6 @@ private slots:
     void slot_timerRepeat();
     void on_cmbSendHistory_activated(const QString& arg1);
     void on_cbxRepeat_clicked(bool state);
+    void on_radioTxAscii_clicked(bool state);
+    void on_radioTxHex_clicked(bool state);
 };

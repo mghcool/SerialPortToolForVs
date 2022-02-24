@@ -141,6 +141,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
     ui.cbxCRC->setChecked(settingInfo.TxCrc);                           // 启用CRC校验
     ui.cmbCRCType->setCurrentIndex(settingInfo.TxCrcModel);             // CRC计算模型
     ui.spinBoxRepeat->setValue(1000);                                   // 重复发送间隔
+    ui.cbxCRC->setEnabled(settingInfo.TxHex);                           // 是否启用CRC
 
     //更新串口列表
     UpdatePortList();
@@ -388,19 +389,22 @@ void MainWindow::on_cmbSendHistory_activated(const QString& arg1)
 // 发送数据
 void MainWindow::SendDatas(QString text)
 {
+    // 换行符转换
+    text = text.replace("\n", "\r\n");
     //转换数据
     QByteArray sendData;
     if (ui.radioTxAscii->isChecked()) sendData = text.toUtf8();   //按Ascii发送
     else sendData = QByteArray::fromHex(text.toLatin1().data()); //按Hex发送
 
     //CRC校验
-    if (ui.cbxCRC->isChecked())
+    if (ui.cbxCRC->isChecked() && ui.radioTxHex->isChecked())
     {
         quint32 crcVal = crcObj.computeCrcVal(sendData, ui.cmbCRCType->currentIndex());
         sendData.append(crcVal & 0x00FF);
         sendData.append(crcVal >> 8);
     }
 
+    // 显示发送
     if (ui.cbxShowSend->isChecked())
     {
         if (ui.cbxShowTime->isChecked())
@@ -415,6 +419,7 @@ void MainWindow::SendDatas(QString text)
         }
     }
     // 写入发送缓存区
+    qDebug() << sendData;
     serial.write(sendData);
     TxdCount += sendData.count();
     lblTxByte->setText("Tx: " + QString::number(TxdCount) + " Bytes");
@@ -509,4 +514,14 @@ void MainWindow::slot_timerRepeat()
         QString inputText = ui.textEditTx->toPlainText();
         SendDatas(inputText);
     }
+}
+
+void MainWindow::on_radioTxAscii_clicked(bool state)
+{
+    ui.cbxCRC->setEnabled(!state);
+}
+
+void MainWindow::on_radioTxHex_clicked(bool state)
+{
+    ui.cbxCRC->setEnabled(state);
 }
