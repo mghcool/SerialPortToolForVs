@@ -54,6 +54,45 @@ END
 // remains consistent on all systems.
 IDI_ICON1               ICON                    "SerialPortTool.ico"
 
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Version
+//
+
+VS_VERSION_INFO VERSIONINFO
+ FILEVERSION 0,2,3,16
+ PRODUCTVERSION 0,2,3,16
+ FILEFLAGSMASK 0x3fL
+#ifdef _DEBUG
+ FILEFLAGS 0x1L
+#else
+ FILEFLAGS 0x0L
+#endif
+ FILEOS 0x40004L
+ FILETYPE 0x1L
+ FILESUBTYPE 0x0L
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "080404b0"
+        BEGIN
+            VALUE "CompanyName", "MGH"
+            VALUE "FileDescription", "串口助手"
+            VALUE "FileVersion", "0.2.3.16"
+            VALUE "InternalName", "SerialPo.exe"
+            VALUE "LegalCopyright", "Copyright (C) 2022 mgh"
+            VALUE "OriginalFilename", "SerialPortTool.exe"
+            VALUE "ProductName", "串口助手"
+            VALUE "ProductVersion", "0.2.3.16"
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x804, 1200
+    END
+END
+
 #endif    // 中文(简体，中国) resources
 /////////////////////////////////////////////////////////////////////////////
 

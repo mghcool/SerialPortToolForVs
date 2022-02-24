@@ -12,6 +12,8 @@
 #include <QDomDocument>
 #include <QDateTime>
 #include <QStandardItemModel>
+#include "VersionUpdate.h"
+
 
 QSerialPort serial;             //串口对象
 QList<QSerialPortInfo> portList;//串口列表
@@ -37,7 +39,8 @@ void MainWindow::closeEvent(QCloseEvent* e)
 MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
 {
     ui.setupUi(this);
-    
+    // 设置窗口标题版本
+    this->setWindowTitle(this->windowTitle() + " v" + VersionUpdate::GetVersion());
     // 获取标准用户配置文件夹
     QDir configDir(QStandardPaths::writableLocation(QStandardPaths::ConfigLocation));
     // 读取配置
@@ -102,7 +105,6 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
         // 设置配置变量
         settingInfo = { 3,3 };
     }
-
     //创建状态标签
     lblStatus = new QLabel();
     ui.statusbar->addWidget(lblStatus);
@@ -110,7 +112,6 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
     lblStatus->setMaximumWidth(500);
     lblStatus->setStyleSheet("color:red;");
     lblStatus->setText(" 未打开串口");
-
     //创建接收和发送字节数标签
     lblRxByte = new QLabel();
     ui.statusbar->addWidget(lblRxByte);
@@ -120,13 +121,11 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
     ui.statusbar->addWidget(lblTxByte);
     lblTxByte->setMinimumWidth(100);
     lblTxByte->setText("Tx: 0 Bytes");
-
     //添加crc选项
     for (int i = 0; i < crcObj.modelListSize; i++)
     {
         ui.cmbCRCType->addItem(crcObj.modelList[i].name);
     }
-
     //设置默认选项
     ui.comBaudRate->setCurrentIndex(settingInfo.BaudRateIndex);         // 波特率
     ui.comDataBits->setCurrentIndex(settingInfo.DataBitsIndex);         // 数据位
@@ -142,10 +141,8 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
     ui.cmbCRCType->setCurrentIndex(settingInfo.TxCrcModel);             // CRC计算模型
     ui.spinBoxRepeat->setValue(1000);                                   // 重复发送间隔
     ui.cbxCRC->setEnabled(settingInfo.TxHex);                           // 是否启用CRC
-
     //更新串口列表
     UpdatePortList();
-
     // 读取缓存
     apacheFile.setFileName(configDir.absoluteFilePath("cache.xml"));
     if (apacheFile.exists())
@@ -178,20 +175,17 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
         apacheDocRoot.appendChild(apacheDoc.createElement("CMD"));
         apacheDocRoot.appendChild(apacheDoc.createElement("History"));
         apacheDoc.appendChild(apacheDocRoot);
-
+        // 保存文件
         QTextStream stream(&apacheFile);
         apacheDoc.save(stream, 4);  //4 缩进字符
         apacheFile.close();
     }
-
     //定义串口更新定时器
     timerUpdatePort = new QTimer(this);
     timerUpdatePort->start(PORT_UPDATE_INTERVAL);
-
     //连接信号槽
     connect(&serial, SIGNAL(readyRead()), this, SLOT(slot_PortReceive()));
     connect(timerUpdatePort, SIGNAL(timeout()), this, SLOT(slot_UpdatePort()));
-
     // 重复发送定时器
     timerRepeat = new QTimer(this);
     connect(timerRepeat, SIGNAL(timeout()), this, SLOT(slot_timerRepeat()));
@@ -334,7 +328,6 @@ void MainWindow::on_start_triggered(bool checked)
             ui.stop->setChecked(true);
         }
     }
-
 }
 
 //暂停串口
