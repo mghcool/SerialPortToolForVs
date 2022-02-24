@@ -11,6 +11,7 @@
 #include <QDir>
 #include <QDomDocument>
 #include <QDateTime>
+#include <QStandardItemModel>
 
 QSerialPort serial;             //串口对象
 QList<QSerialPortInfo> portList;//串口列表
@@ -238,10 +239,16 @@ void MainWindow::UpdatePortList()
     {
         portList = newList;
         ui.cmbSerialPort->clear();
+        QStandardItemModel* model = new QStandardItemModel();
+        QStandardItem* item = new QStandardItem();//设置下拉框选择提示
         foreach(const QSerialPortInfo & info, portList)
         {
-            ui.cmbSerialPort->addItem(info.portName() + " " + info.description());
+            QString portInfo = info.portName() + " " + info.description();
+            item = new QStandardItem(portInfo);     // 下拉框显示文本
+            item->setToolTip(portInfo);             // 设置提示类容
+            model->appendRow(item);                 // 将item添加到model中
         }
+        ui.cmbSerialPort->setModel(model);          // 下拉框设置model
     }
 }
 
@@ -311,14 +318,14 @@ void MainWindow::on_start_triggered(bool checked)
         else
         {
             switch (serial.error()) {
-            case QSerialPort::PermissionError:
-                QMessageBox::warning(this, "错误", "串口被占用！", QMessageBox::Ok);
-                break;
-            case QSerialPort::OpenError:
-                QMessageBox::warning(this, "错误", "无法打开串口", QMessageBox::Ok);
-                break;
-            default:
-                QMessageBox::warning(this, "错误", "打开串口错误!", QMessageBox::Ok);
+                case QSerialPort::PermissionError:
+                    QMessageBox::warning(this, "错误", "串口被占用！", QMessageBox::Ok);
+                    break;
+                case QSerialPort::OpenError:
+                    QMessageBox::warning(this, "错误", "无法打开串口", QMessageBox::Ok);
+                    break;
+                default:
+                    QMessageBox::warning(this, "错误", "打开串口错误!", QMessageBox::Ok);
             }
             serial.clearError();
             ui.start->setChecked(false);
