@@ -423,7 +423,7 @@
          <property name="title">
           <string>发送设置</string>
          </property>
-         <layout class="QGridLayout" name="gridLayout_3" rowstretch="0,0,0,0,0" columnstretch="0,0,0">
+         <layout class="QGridLayout" name="gridLayout_3" rowstretch="0,0,0,0" columnstretch="0,0,0">
           <property name="topMargin">
            <number>9</number>
           </property>
@@ -695,6 +695,9 @@ p, li { white-space: pre-wrap; }
   </action>
   <action name="stop">
    <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="checked">
     <bool>true</bool>
    </property>
    <property name="icon">
